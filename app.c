@@ -5,6 +5,8 @@
 #include <unistd.h>
 #define SIZE 256
 
+//./app ./path1 ./path2
+
 int main(int argc, char const *argv[])
 {
 
