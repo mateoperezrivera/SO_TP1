@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #define SIZE 256
+#define INPUT_SIZE 512
 
 //./app ./path1 ./path2
 
@@ -23,14 +24,30 @@ int main(int argc, char const *argv[])
                 // LA CONSIGNA DICE QUE SE HABLA A LOS ESCLAVOS POR PIPES
                 // primero intentemos que funcione con 1 esclavo
                 pid_t pid;
-                int pipe1[2], readbytes;
-                char buffer1[SIZE];
-                pipe1[1] = argv[i];
-                pipe(pipe1);
-                if (pipe(pipe1) < 0)
+               
+
+                ret = fork();
+                if(ret < 0)
                 {
-                    // PIPE ERROR
+                    fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
                 }
+                else if (ret == 0)
+                {
+                    
+                }else{
+                    //creo el pipe q me va a comunicar con mi hijo
+                    int pipe1[2], readbytes;
+                    char buffer1[SIZE];
+                    pipe1[1] = argv[i];
+                    pipe(pipe1);
+                    if (pipe(pipe1) < 0)
+                    {
+                        // PIPE ERROR
+                    }
+                    read(STDIN_FILENO, buffer1[i], INPUT_SIZE); //guardo en buffer por orden de llegada
+                }
+
+
                 int pipe2[2], readbytes;
 
                 pipe(pipe2);
