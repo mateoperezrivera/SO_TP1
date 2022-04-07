@@ -14,6 +14,7 @@ int main(int argc, char const *argv[])
     if (argc > 1)
     { // Tipo si por lo menos hay uno
         FILE *file;
+        
         for (int i = 1; i < argc; i++)
         {
             file = fopen(argv[i], "r");
@@ -23,16 +24,18 @@ int main(int argc, char const *argv[])
                 // LA CONSIGNA DICE QUE L BUFFER USA SHARED MEMORY Y ES UNO
                 // LA CONSIGNA DICE QUE SE HABLA A LOS ESCLAVOS POR PIPES
                 // primero intentemos que funcione con 1 esclavo
+                // Despues hacemos un vector de pipes para controlar todos los esclavos
                 pid_t pid;
                
 
-                ret = fork();
-                if(ret < 0)
+                pid = fork();
+                if(pid < 0)
                 {
                     fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
                 }
-                else if (ret == 0)
+                else if (pid == 0)
                 {
+                    //si esta libre le tengo q pasar otro archivo
                     
                 }else{
                     //creo el pipe q me va a comunicar con mi hijo
@@ -44,6 +47,9 @@ int main(int argc, char const *argv[])
                     {
                         // PIPE ERROR
                     }
+
+                // DEBE recibir el resultado del procesamiento de cada archivo y DEBE agregarlo a un
+                // buffer POR ORDEN DE LLEGADA.
                     read(STDIN_FILENO, buffer1[i], INPUT_SIZE); //guardo en buffer por orden de llegada
                 }
 

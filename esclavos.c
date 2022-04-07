@@ -1,23 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#define INPUT_SIZE 512
+#define MAX_SIZE 512
+static char resuelto[] = "resuelto.txt";
+static char esclavo[] = "Soy el escalvo ";
 
 // The popen() function shall execute the command specified by the string command.
 // It shall create a pipe between the calling program and the executed command, and
 // shall return a pointer to a stream that can be used to either read from or write to the pipe.
 
-int main()
+int main(int argc, char const *argv[])          //El argumento va a salir el numero de esclavo
 {
-    char input[INPUT_SIZE];
-    char output[INPUT_SIZE];
+    char nroEsclavo= *argv[1];
+    char input[MAX_SIZE];
+    char output[MAX_SIZE];
+    char salidaEgrep[MAX_SIZE];
     // minisat [options] [INPUT-FILE [RESULT-OUTPUT-FILE]]
     char *inputProcesado; // Un path de respuesta para darle a minisat
     int inputBytes;
     pid_t ret;
-    dup2(0,6);      //Me guardo en el fd 6 la IN del padre para recuperarla despues?????         
-    while ((inputBytes = read(STDIN_FILENO, input, INPUT_SIZE)) > 0)
+    dup2(0,6);      //Me guardo en el fd 6 la IN del padre para recuperarla despues?????       
+    FILE* fptr;    //Puntero donde voy a guardar el nuevo archivo a abrir  
+    while ((inputBytes = read(STDIN_FILENO, input, MAX_SIZE)) > 0)
     {
+        strcpy(output,input);
+        int i=0;
+        for(;i<MAX_SIZE && output[i]!=0;i++);
+        int j=0;
+        while(resuelto[j]!=0){    //Cambio el path para generar el archivo resultado
+            output[i+j]=resuelto[j];
+            j++;
+        }
+
+        fptr=fopen(output,"w");
+        fclose(output);
         ret = fork();
         if (ret < 0)
         {
@@ -64,15 +80,32 @@ int main()
                 dup(4);          //Copio el Read del pipe al STD_IN
                 close(4);
                 close(3);
-                FILE* file=fopen(output,"w");
-                //Mi idea es guardar en el  buffer al q apunta el file el resulado del egrep
-                read(STDIN_FILENO, file, file->_bufsiz);      //Recibir por el R del pipe, el contenido de output procesado por egrep
-                //Esto supuestamente me dejaria en output, la salida del egrep
+                //Guardo en salidaEgrep, el resultado de egrep
+                int cantidadLeida = read(STDIN_FILENO, salidaEgrep ,MAX_SIZE);      
+                salidaEgrep[cantidadLeida++]='\n';
+                int k=0;
+                while(esclavo[k]!=0){
+                    salidaEgrep[cantidadLeida+k]=esclavo[k++];
+                }
+                //Agrego a la salida de egrep, la identificacion del esclavo
+                salidaEgrep[cantidadLeida+k]=nroEsclavo,k++;
+                salidaEgrep[cantidadLeida+k]='\n',k++; 
+                //Agrego a la salida de egrep, 
+                salidaEgrep[k++]='\n';   //
+                k+=cantidadLeida;
+                int l=0;
+                //Agrego el nombre del archivo procesado
+                while(input[l]!=0){
+                    salidaEgrep[k+l]=input[l];
+                    l++;
+                }
+                salidaEgrep[k+l]=0;
+
                 close(pipe1[0]);
                 fclose(pipe1[1]);
                 fclose(output);
                 dup2(6,0);               //Recupero el fd con la salida del pipe del padre
-                printf("%s",output);//Printeo a salida estandard
+                printf("%s",salidaEgrep);//Printeo a salida estandard todo el resultado
             }
         
         
