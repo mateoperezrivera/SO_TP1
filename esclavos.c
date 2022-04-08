@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include "sharedMemory.h"
 #define MAX_SIZE 512
 static char resuelto[] = "resuelto.txt";
 static char esclavo[] = "Soy el escalvo ";
@@ -10,7 +11,7 @@ static char esclavo[] = "Soy el escalvo ";
 // shall return a pointer to a stream that can be used to either read from or write to the pipe.
 
 int main(int argc, char const *argv[])          //El argumento va a salir el numero de esclavo
-{
+{              
     char nroEsclavo= *argv[1];
     char input[MAX_SIZE];
     char output[MAX_SIZE];
@@ -110,5 +111,6 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
         
         
     }
+
 }
 
