@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "sharedMemory.h"
+#include "utility.h"
 
 // _IONBF
 // No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.

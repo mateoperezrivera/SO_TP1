@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include "sharedMemory.h"
 
 #define LIMITER '|'
 #define MAX_SIZE 512
@@ -43,7 +42,7 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
     dup2(0,6);      //Me guardo en el fd 6 la IN del padre para recuperarla despues?????       
     FILE* fptr;    //Puntero donde voy a guardar el nuevo archivo a abrir  
     int completePathIndex;
-    while ((inputBytes = read(STDIN_FILENO, fullInput, MAX_SIZE)) > 0)
+    while ((inputBytes = getline( &fullInput,MAX_SIZE, STDIN_FILENO)) >0)
     {   
         completePathIndex=0;
         while (completePathIndex!=inputBytes){

@@ -3,7 +3,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "sharedMemory.h"
+#include "utility.h"
 #define SIZE 256
 #define INPUT_SIZE 512
 #define SLAVE_NUM 5
@@ -18,7 +18,7 @@ int main(int argc, char const *argv[])
         FILE *file;
 
         //creo 5 esclavos vacios
-        int pipeFd[SLAVE_NUM][2][2];
+        int **pipeFd[SLAVE_NUM];
         for(int i=0 ; i<SLAVE_NUM ; i++){
             // int ** slaveFd = createSlave();            
             pipeFd[i]=createSlave();
@@ -40,6 +40,8 @@ int main(int argc, char const *argv[])
             {
                 //trato de obtener el bloque o lo creo en caso de q no exista
                 char * sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
+                //Trato de obtener el semaforo o lo creo en caso de que no exista
+                sem_t * sem=joinSemaphore();
                 if (sharedMemBlock == NULL){
                     //ERROR
                     return -1;
@@ -53,6 +55,10 @@ int main(int argc, char const *argv[])
                 //paso por el pipe de escritura los argumentos                
                 write(pipeFd[j++][1] , argv[i], strlen(argv[i]));
 
+                
+                sem_wait(sem);
+                //Aca deberia de estar la parte de lectura de los escalvos y entregarles mas trabajo
+                sem_post(sem);
                 //Cuando hagamos vista tenemos q usar el pipe de lectura
 
                 //Termine y salgo del bloque de memoria
@@ -71,12 +77,18 @@ int main(int argc, char const *argv[])
 int ** createSlave(){
     pid_t pid;
 
-    int pipes[2][2];
+    int **pipes;
     int pipe1[2];
     int pipe2[2];
 
     //[[pipe1, [r,w]],[pipe2, [r,w]]]
-
+    if (pipe(pipe1) < 0){
+                // PIPE ERROR
+    }
+    if (pipe(pipe2) < 0){
+                // PIPE ERROR
+    }
+    
     pid = fork();
     if(pid < 0){
         fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
@@ -92,9 +104,7 @@ int ** createSlave(){
     }else{
         //creo el pipe q me va a comunicar con mi hijo
         // pipe(pipe1);
-        if (pipe(pipe1) < 0){
-            // PIPE ERROR
-        }
+        
         close(pipe1[1]);
         close(pipe2[0]);
     }

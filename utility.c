@@ -8,20 +8,21 @@
 
 #define ERROR (-1)
 
+static sem_t * sem = NULL;
 
-static sem_t * getSharedSemaphore(){
+static void createSharedSemaphore(){
     sem_t* semaphore=sem_open(SEM_ESCRITURA, IPC_CREATE, 0660,0);
     if (semaphore == SEM_FAILED){
         perror("sem_open/producer");
         exit(EXIT_FAILURE);
     } 
-    return semaphore;
-
+    sem=semaphore;
 }
 
 sem_t * joinSemaphore(){
-    sem_t * getSharedSemaphore();
-    
+    if (sem==NULL)
+        createSharedSemaphore();
+    return sem;
 }
 
 
