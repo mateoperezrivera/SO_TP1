@@ -9,7 +9,6 @@
 #define SLAVE_NUM 5
 
 //./app ./path1 ./path2
-void slave(char* argumento,int numSlave);
 
 int main(int argc, char const *argv[])
 {
@@ -19,12 +18,19 @@ int main(int argc, char const *argv[])
         FILE *file;
 
         //creo 5 esclavos vacios
-        int * pipeFd[SLAVE_NUM][2];
+        int pipeFd[SLAVE_NUM][2][2];
         for(int i=0 ; i<SLAVE_NUM ; i++){
-            int * slaveFd = createSlave();            
-            pipeFd[i][0] = slaveFd[0];
-            pipeFd[i][1] = slaveFd[1];
+            // int ** slaveFd = createSlave();            
+            pipeFd[i]=createSlave();
+            // for(int j=0; j<2 ; j++){
+            //     for(int k=0 ; k<2 ;k++){
+            //         pipeFd[i][j][k] = slaveFd[j][k];
+            //     }
+            // }
+            
         }
+
+        //[ [ [pipe1.0,[r,w]], [pipe1.1,[r,w]] ] ]
 
         int j=0;
         for (int i = 1; i < argc; i++)
@@ -39,12 +45,15 @@ int main(int argc, char const *argv[])
                     return -1;
                 }
 
+                //si ya use todos vuelvo a empezar
                 if(j==SLAVE_NUM){
                     j=0;
                 }
-                
-                slave(argv[i],pipeFd[j++]);
-                read(STDIN_FILENO, buffer1[i], INPUT_SIZE); //guardo en buffer por orden de llegada                    
+
+                //paso por el pipe de escritura los argumentos                
+                write(pipeFd[j++][1] , argv[i], strlen(argv[i]));
+
+                //Cuando hagamos vista tenemos q usar el pipe de lectura
 
                 //Termine y salgo del bloque de memoria
                 leaveMemoryBlock(sharedMemBlock);
@@ -59,34 +68,40 @@ int main(int argc, char const *argv[])
 }
 
 //Creo el esclavo y retorno su fd
-int * createSlave(){
+int ** createSlave(){
     pid_t pid;
-               
+
+    int pipes[2][2];
+    int pipe1[2];
+    int pipe2[2];
+
+    //[[pipe1, [r,w]],[pipe2, [r,w]]]
+
     pid = fork();
     if(pid < 0){
         fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
     }else if (pid == 0){
         //Me quedo esperando para correr el eclavos.c
-        execv("esclavos",NULL);        
+        close(pipe1[0]);
+        close(pipe2[1]);
+        dup2(pipe1[1],STDOUT_FILENO);
+        dup2(pipe2[0], STDIN_FILENO);
+        close(pipe1[1]);
+        close(pipe2[0]);
+        execv("esclavos.c",NULL);        
     }else{
         //creo el pipe q me va a comunicar con mi hijo
-        int pipe1[2], readbytes;
-       
-        pipe(pipe1);
+        // pipe(pipe1);
         if (pipe(pipe1) < 0){
             // PIPE ERROR
         }
+        close(pipe1[1]);
+        close(pipe2[0]);
     }
 
-    return pipe1; //devuelvo el fd
+    pipes[0] = pipe1; //leyendo
+    pipes[1] = pipe2; //escribiendo
+
+    return pipes; //devuelvo el fd
 }
 
-void slave(char* argumento,int * fd){
-    
-        fd[1] = argumento;
-        pipe(fd);
-        if (pipe(fd) < 0){
-            // PIPE ERROR
-        }
-
-}
