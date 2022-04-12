@@ -29,7 +29,7 @@ int main(int argc, char const *argv[])
                     return -1;
                 }
 
-                slave();
+                slave(argv[i],i);
                 //Termine y salgo del bloque de memoria
                 leaveMemoryBlock(sharedMemBlock);
                 return 1;
@@ -42,7 +42,7 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void slave(){
+void slave(char* argumento,int numSlave){
     // crear x esclavos y hacer dos pipe para cada uno, uno de idaa y otro de vuelta
     // LA CONSIGNA DICE QUE L BUFFER USA SHARED MEMORY Y ES UNO
     // LA CONSIGNA DICE QUE SE HABLA A LOS ESCLAVOS POR PIPES
@@ -61,7 +61,7 @@ void slave(){
     //creo el pipe q me va a comunicar con mi hijo
         int pipe1[2], readbytes;
         char buffer1[SIZE];
-        pipe1[1] = argv[i];
+        pipe1[1] = argumento;
         pipe(pipe1);
         if (pipe(pipe1) < 0){
             // PIPE ERROR
@@ -69,7 +69,7 @@ void slave(){
 
         // DEBE recibir el resultado del procesamiento de cada archivo y DEBE agregarlo a un
         // buffer POR ORDEN DE LLEGADA.
-        read(STDIN_FILENO, buffer1[i], INPUT_SIZE); //guardo en buffer por orden de llegada
+        read(STDIN_FILENO, buffer1[numSlave], INPUT_SIZE); //guardo en buffer por orden de llegada
     }
 
 
