@@ -6,17 +6,27 @@
 #include "sharedMemory.h"
 #define SIZE 256
 #define INPUT_SIZE 512
+#define SLAVE_NUM 5
 
 //./app ./path1 ./path2
+void slave(char* argumento,int numSlave);
 
 int main(int argc, char const *argv[])
 {
 
-
     if (argc > 1)
     { // Tipo si por lo menos hay uno
         FILE *file;
-        
+
+        //creo 5 esclavos vacios
+        int * pipeFd[SLAVE_NUM][2];
+        for(int i=0 ; i<SLAVE_NUM ; i++){
+            int * slaveFd = createSlave();            
+            pipeFd[i][0] = slaveFd[0];
+            pipeFd[i][1] = slaveFd[1];
+        }
+
+        int j=0;
         for (int i = 1; i < argc; i++)
         {
             file = fopen(argv[i], "r");
@@ -29,7 +39,13 @@ int main(int argc, char const *argv[])
                     return -1;
                 }
 
-                slave(argv[i],i);
+                if(j==SLAVE_NUM){
+                    j=0;
+                }
+                
+                slave(argv[i],pipeFd[j++]);
+                read(STDIN_FILENO, buffer1[i], INPUT_SIZE); //guardo en buffer por orden de llegada                    
+
                 //Termine y salgo del bloque de memoria
                 leaveMemoryBlock(sharedMemBlock);
                 return 1;
@@ -42,51 +58,35 @@ int main(int argc, char const *argv[])
     return 0;
 }
 
-void slave(char* argumento,int numSlave){
-    // crear x esclavos y hacer dos pipe para cada uno, uno de idaa y otro de vuelta
-    // LA CONSIGNA DICE QUE L BUFFER USA SHARED MEMORY Y ES UNO
-    // LA CONSIGNA DICE QUE SE HABLA A LOS ESCLAVOS POR PIPES
-    // primero intentemos que funcione con 1 esclavo
-    // Despues hacemos un vector de pipes para controlar todos los esclavos
+//Creo el esclavo y retorno su fd
+int * createSlave(){
     pid_t pid;
                
-
     pid = fork();
     if(pid < 0){
         fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
     }else if (pid == 0){
-        //si esta libre le tengo q pasar otro archivo
-                    
+        //Me quedo esperando para correr el eclavos.c
+        execv("esclavos",NULL);        
     }else{
-    //creo el pipe q me va a comunicar con mi hijo
+        //creo el pipe q me va a comunicar con mi hijo
         int pipe1[2], readbytes;
-        char buffer1[SIZE];
-        pipe1[1] = argumento;
+       
         pipe(pipe1);
         if (pipe(pipe1) < 0){
             // PIPE ERROR
         }
-
-        // DEBE recibir el resultado del procesamiento de cada archivo y DEBE agregarlo a un
-        // buffer POR ORDEN DE LLEGADA.
-        read(STDIN_FILENO, buffer1[numSlave], INPUT_SIZE); //guardo en buffer por orden de llegada
     }
 
+    return pipe1; //devuelvo el fd
+}
 
-    int pipe2[2], readbytes;
-
-    pipe(pipe2);
-    if (pipe(pipe2) < 0){
-        // PIPE ERROR
-    }
-    if (fork() == 0){
-        // hijo
-    }
-
-    // mira encontre esto de pipes q maybe nos sirve
-    //  The popen() function shall execute the command specified by the string command.
-    // It shall create a pipe between the calling program and the executed command, and
-    // shall return a pointer to a stream that can be used to either read from or write to the pipe.
-    // te hace el pipe doble de una no? eso entendi creo q si osea te lo hace entre donde esta y el comando no se si es justo lo q necesitamos aca
+void slave(char* argumento,int * fd){
+    
+        fd[1] = argumento;
+        pipe(fd);
+        if (pipe(fd) < 0){
+            // PIPE ERROR
+        }
 
 }
