@@ -6,14 +6,17 @@
 
 int main(int argc, char const *argv[])
 {   
+    sem_t *sem = joinSemaphore();
     char * sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
     if (sharedMemBlock == NULL){
         //ERROR
         return -1;
     }
+    
 
     //ACA VA LO Q SEA Q TENGA Q HACER LA VISTA
-
+    leaveSemaphore(sem);
+    terminateSemaphore(sem);
     leaveMemoryBlock(sharedMemBlock);
     return 0;
 }

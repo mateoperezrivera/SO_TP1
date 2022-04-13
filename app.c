@@ -1,12 +1,21 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/time.h>
+#include <sys/select.h>
+
 #include <fcntl.h>
 #include <unistd.h>
 #include "utility.h"
-#define SIZE 256
-#define INPUT_SIZE 512
+
 #define SLAVE_NUM 5
+#define STRING_SIZE 11
+static char slaveString[]="\tSlave ID: ";
+static int sharedMemoryIndex=0;
+void createSlaves(int **writeFd, int **readFd);
+
+
+
 
 int main(int argc, char const *argv[])
 {
@@ -14,34 +23,74 @@ int main(int argc, char const *argv[])
     if (argc > 1)
     {
 
+
         // creo 5 esclavos vacios
         int *writeFd[SLAVE_NUM];
         int *readFd[SLAVE_NUM];
         createSlaves(writeFd, readFd);
 
         int j = 0;
-        for (int i = 1; i < argc; i++)
-        {
+        
 
-            // trato de obtener el bloque o lo creo en caso de q no exista
-            char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
-            // Trato de obtener el semaforo o lo creo en caso de que no exista
-            sem_t *sem = joinSemaphore();
-            if (sharedMemBlock == NULL)
+        // trato de obtener el bloque o lo creo en caso de q no exista
+        char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
+        if (sharedMemBlock == NULL)
             {
                 // ERROR
                 return -1;
             }
-
-            sem_wait(sem);
-            // Aca deberia de estar la parte de lectura de los escalvos y entregarles mas trabajo
-            sem_post(sem);
-            // Cuando hagamos vista tenemos q usar el pipe de lectura
-
-            // Termine y salgo del bloque de memoria
-            leaveMemoryBlock(sharedMemBlock);
-            return 1;
+        // Trato de obtener el semaforo o lo creo en caso de que no exista
+        sem_t *sem = joinSemaphore();
+        //Creo mi fd_set para usar en el select
+        fd_set* miSet;
+        for(int i=0; i<SLAVE_NUM;i++){
+            FD_SET(readFd[i][0],miSet);               //Este es el fd al que llega la salida de los escalvos
         }
+
+
+        char solution[MAX_SIZE];
+        int j=0;
+        for(int i=0;j<argc/10;j++){
+            write(writeFd[i++],argv[j]);
+            if (k>=SLAVE_NUM){
+            k=0;}
+        }
+        
+        while(j<argc){        //hay que ver que logica usamos para estar viendo los resultados
+            if(select(SLAVE_NUM,miSet,NULL,NULL,NULL)==-1)
+                //ERROR
+                return -1;
+
+            
+            // Aca deberia de estar la parte de lectura de los escalvos y entregarles mas trabajo
+
+            //Una vez salta el select vamos probando uno por uno hasta ver cual tenemos lectura
+            for(int i=0; i<SLAVE_NUM;i++){
+                if (FD_ISSET(readFd[i][0],miSet)!=0){//Hay escritura
+                    sem_wait(sem);
+                    int bytesRead=read(STDIN_FILENO,solution,MAX_SIZE);
+                    int k=0
+                    for(;k<STRING_SIZE;k++){
+                        solution[bytesRead+k]=slaveString[k];
+                    }
+                    solution[bytesRead+k]='0'+i;        //Le agrego el numero de esclavo
+                    solution[bytesRead+k+1]='\n';
+                    sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
+                    sem_post(sem);
+                    write(writeFd[i][1],argv[j],strlen(argv[j]));
+                    j++;
+                    
+                }
+            }
+
+            
+            // Cuando hagamos vista tenemos q usar el pipe de lectura
+        }
+        // Termine y salgo del bloque de memoria
+        leaveSemaphore(sem);
+        leaveMemoryBlock(sharedMemBlock);
+        return 1;
+        
     }
     // No se bien donde destruirlo
     // destroyMemoryBlock(FILENAME);

@@ -5,6 +5,7 @@
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
+#include <sys/mman.h>
 
 #define ERROR (-1)
 
@@ -25,6 +26,13 @@ sem_t * joinSemaphore(){
     return sem;
 }
 
+void leaveSemaphore(sem){
+    sem_close(sem)
+}
+
+void terminateSemaphore(sem){
+    sem_destroy(sem);
+}
 
 //Toma el filename y el tamanio y devuelve el id del bloque
 static int getSharedBlock(char* filename, int size){
