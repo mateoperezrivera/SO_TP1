@@ -10,10 +10,11 @@
 #define MAX_SIZE 1024
 #define FILENAME "app.c"
 
+int getSharedBlock(char* filename, int size);
 sem_t * joinSemaphore();
-void leaveSemaphore(sem);
-void destroySemaphore(sem);
+int leaveSemaphore(sem_t * sem);
+int terminateSemaphore(sem_t * sem);
 char * joinMemoryBlock( char* filename, int size);
-bool leaveMemoryBlock(int id);
-
+bool leaveMemoryBlock(char * id);
+bool destroyMemoryBlock(int id);
 #endif

@@ -24,25 +24,22 @@ void getPath(char* newPath,char* completePath,int* index){
 // Vamos a hacer que puedan recibir multiples paths, separados por un pipe
 int main(void)          //El argumento va a salir el numero de esclavo
 {              
-    char fullInput[MAX_SIZE];
-    char output[MAX_SIZE];
+    size_t size = MAX_SIZE;
+    char * fullInput;
     char salidaEgrep[MAX_SIZE];
     // minisat [options] [INPUT-FILE [RESULT-OUTPUT-FILE]]
-    char *inputProcesado; // Un path de respuesta para darle a minisat
     int inputBytes;
-    pid_t ret;
     
-    dup2(0,6);      //Me guardo en el fd 6 la IN del padre para recuperarla despues?????       
-    FILE* fptr;    //Puntero donde voy a guardar el nuevo archivo a abrir  
+
     int completePathIndex;
-    while ((inputBytes = getline( &fullInput,MAX_SIZE, STDIN_FILENO)) >0)
+    while ((inputBytes = getline( &fullInput, &size, STDIN_FILENO)) >0)
     {   
         completePathIndex=0;
         while (completePathIndex!=inputBytes){
             char input[MAX_SIZE];       
             getPath(input,fullInput,&completePathIndex);
-
-            int cantidadLeida=read(popen("./minisat input | egrep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\n\" \"\t\" | tr \" \" \"\t\" | tr -d \"\t\"", "r"), salidaEgrep ,MAX_SIZE); // en minisat poner el path, voy a hacer q el output sea el mismo que el input
+            FILE * fileNum =popen("./minisat input | egrep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\n\" \"\t\" | tr \" \" \"\t\" | tr -d \"\t\"", "r");
+            int cantidadLeida=read(fileno(fileNum), salidaEgrep ,MAX_SIZE); // en minisat poner el path, voy a hacer q el output sea el mismo que el input
             
             salidaEgrep[cantidadLeida++]='\t';
         

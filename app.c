@@ -3,15 +3,15 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/select.h>
-
+#include <string.h>
 #include <fcntl.h>
-#include <unistd.h>
 #include "utility.h"
+#include <unistd.h>
 
 #define SLAVE_NUM 5
 #define STRING_SIZE 11
+#define ERROR -1
 static char slaveString[]="\tSlave ID: ";
-static int sharedMemoryIndex=0;
 void createSlaves(int **writeFd, int **readFd);
 
 
@@ -29,21 +29,18 @@ int main(int argc, char const *argv[])
         int *readFd[SLAVE_NUM];
         createSlaves(writeFd, readFd);
 
-        int j = 0;
-        
-
         // trato de obtener el bloque o lo creo en caso de q no exista
         char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
-        char *sharedMemBLockSeguro=sharedMemoryBlock;
+        char *sharedMemBlockSeguro=sharedMemBlock;
         if (sharedMemBlock == NULL)
             {
                 // ERROR
-                return -1;
+                return ERROR;
             }
         // Trato de obtener el semaforo o lo creo en caso de que no exista
         sem_t *sem = joinSemaphore();
         //Creo mi fd_set para usar en el select
-        fd_set* miSet;
+        fd_set* miSet=NULL;
         for(int i=0; i<SLAVE_NUM;i++){
             FD_SET(readFd[i][0],miSet);               //Este es el fd al que llega la salida de los escalvos
         }
@@ -51,7 +48,7 @@ int main(int argc, char const *argv[])
         char solution[MAX_SIZE];
         int j=0;
         for(int i=0;j<argc/10;j++){
-            write(writeFd[i++],argv[j]);
+            write(writeFd[i++][1],argv[j], strlen(argv[j]));
             if (i>=SLAVE_NUM)
                 i=0;
         }
@@ -68,7 +65,7 @@ int main(int argc, char const *argv[])
             for(int i=0; i<SLAVE_NUM;i++){
                 if (FD_ISSET(readFd[i][0],miSet)!=0){//Hay escritura
                     int bytesRead=read(STDIN_FILENO,solution,MAX_SIZE);
-                    int k=0
+                    int k=0;
                     for(;k<STRING_SIZE;k++){
                         solution[bytesRead+k]=slaveString[k];
                     }
@@ -123,7 +120,8 @@ void createSlaves(int **writeFd, int **readFd)
             dup2(writeFd[i][0], STDIN_FILENO);
             close(readFd[i][1]);
             close(writeFd[i][0]);
-            execv("esclavos.c", NULL);
+            char *argv_for_program[] = { "esclavos.c", NULL };
+            execv("esclavos.c", argv_for_program);
         }
         else
         {

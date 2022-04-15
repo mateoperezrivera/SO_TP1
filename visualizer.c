@@ -1,15 +1,17 @@
-#include <stdio.h>
 #include "utility.h"
+#include <stdio.h>
 #define ERROR -1
 
 // _IONBF
 // No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.
 
+void printElements(char** shm, int * hayElem);
+
 int main(int argc, char const *argv[])
 {   
     sem_t *sem = joinSemaphore();
     char * sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
-    char *sharedMemBLockSeguro=sharedMemoryBlock;
+    char *sharedMemBlockSeguro=sharedMemBlock;
 
     if (sharedMemBlock == NULL){
         return ERROR;
@@ -21,7 +23,6 @@ int main(int argc, char const *argv[])
     }
  
     int hayElementos=1;
-    char* result;
     while(hayElementos){
         sem_wait(sem);
         printElements(&sharedMemBlock, &hayElementos);
@@ -37,13 +38,13 @@ int main(int argc, char const *argv[])
 }
 
 void printElements(char** shm, int * hayElem){
-    char* result;
+    char result[MAX_SIZE];
     int index=0;
-    while(**shm!='\n' && *shm!=EOF){
-        result[index++]==*(*shm++);
+    while(**shm!='\n' && **shm!=EOF){
+        result[index++]=*(*shm++);
     }
     if(**shm==EOF){
-        &hayElem=0;
+        *hayElem=0;
     }
     printf("%s",result);
 }

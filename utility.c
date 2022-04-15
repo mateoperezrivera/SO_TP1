@@ -11,13 +11,14 @@
 
 static sem_t * sem = NULL;
 
-static char * createSharedSemaphore(){
-    sem_t* semaphore=sem_open(SEM_ESCRITURA, IPC_CREATE, 0660,0);
+static sem_t * createSharedSemaphore(){
+    sem_t* semaphore=sem_open(SEM_ESCRITURA, IPC_CREAT, 0660,0);
     if (semaphore == SEM_FAILED){
         perror("sem_open/producer");
         exit(EXIT_FAILURE);
     } 
     sem=semaphore;
+    return sem;
 }
 
 sem_t * joinSemaphore(){
@@ -26,17 +27,17 @@ sem_t * joinSemaphore(){
     return sem;
 }
 
-void leaveSemaphore(sem){
-    sem_close(sem)
+int leaveSemaphore(sem_t * sem){
+   return sem_close(sem);
 }
 
-void terminateSemaphore(sem){
-    sem_destroy(sem);
+int terminateSemaphore(sem_t * sem){
+   return sem_destroy(sem);
 }
 
 
 //Toma el filename y el tamanio y devuelve el id del bloque
-static int getSharedBlock(char* filename, int size){
+int getSharedBlock(char* filename, int size){
     key_t key;
 
     key = ftok(filename,0);
@@ -52,13 +53,13 @@ char * joinMemoryBlock( char* filename, int size){
     int id = getSharedBlock(filename, size);
 
     if(id==ERROR){
-        return null;
+        return NULL;
     }
 
     //mapeo el bloque al id devolviendome un puntero al mismo
     char * result=shmat(id, NULL, 0);
     if(result == (char *)ERROR){
-        return NULL
+        return NULL;
     }
 
     return result;
@@ -67,7 +68,7 @@ char * joinMemoryBlock( char* filename, int size){
 
 //Me voy del bloque
 bool leaveMemoryBlock(char * block){
-    return (shmdt(block) != ERROR)
+    return (shmdt(block) != ERROR);
 }
 
 //destruyo el bloque
