@@ -5,7 +5,6 @@
 
 #define LIMITER '|'
 #define MAX_SIZE 1024
-static char resuelto[] = "resuelto.txt";
 
 
 void getPath(char* newPath,char* completePath,int* index){
@@ -43,85 +42,23 @@ int main(void)          //El argumento va a salir el numero de esclavo
             char input[MAX_SIZE];       
             getPath(input,fullInput,&completePathIndex);
 
-            strcpy(output,input);
-            int i=0;
-            for(;i<MAX_SIZE && output[i]!=0;i++);
-            int j=0;
-            while(resuelto[j]!=0){    //Cambio el path para generar el archivo resultado
-                output[i+j]=resuelto[j];
-                j++;
-            }
-
-            fptr=fopen(output,"w");
-            fclose(output);
-            ret = fork();
-            if (ret < 0)
-            {
-                fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
-            }
-            else if (ret == 0)
-            {
-                execv("./minisat input | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\n\" \"\t\" | tr \" \" \"\t\" | tr -d \"\t\"", 2); // en minisat poner el path, voy a hacer q el output sea el mismo que el input
-            }
-            else
-            {
-                if (wait() == 0)
-                { // Aca va el valor de retorno si miniset falla
-                // hacer algo en caso fallo
-                }
-
-                // Creo el pipe de hijo a padre ya que egrep retorna por salida estandard y necesito esa respúesta
-                pid_t pid;
-                int pipe1[2];
-
-                pipe(pipe1);                //Agrega fd 3 y 4
-                if (pipe(pipe1) < 0)
-                {
-                    // PIPE ERROR
-                }
-
-
-                ret = fork();
-                if(ret < 0)
-                {
-                    fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
-                }
-                else if (ret == 0)
-                {
-                    close(1);       //Cierro la OUT_STD del hijo
-                    dup(3);          //Copia el fd 3 en el fd mas bajo habilitado
-                    close(3);
-                    close(4);
-                    dup2(1,2);
-                    execv("/egrep - o - e \"Number of.*[0-9]\+\" - e \"CPU time.*\" - e \".*SATISFIABLE\" output", 8); // en egrep poner el path, voy a hacer q el output sea el mismo que el input
-                }
-                else{
-                    close(0);        //Cierro la entrada standard
-                    dup(4);          //Copio el Read del pipe al STD_IN
-                    close(4);
-                    close(3);
-                    //Guardo en salidaEgrep, el resultado de egrep
-                    int cantidadLeida = read(STDIN_FILENO, salidaEgrep ,MAX_SIZE);      
-                    close(pipe1[0]);
-                    fclose(pipe1[1]);
-                    fclose(output);
-                    dup2(6,0);               //Recupero el fd con la salida del pipe del padre
-
-                    salidaEgrep[cantidadLeida++]='\t';
-                    
-                    int l=0;
-                    //Agrego el nombre del archivo procesado
-                    while(input[l]!=0){
-                        salidaEgrep[cantidadLeida+l]=input[l];
-                        l++;
-                    }
-                    //Agrego un enter al final para marcar el final del output, no estoy seguro si es eso o '\0'
-                    salidaEgrep[cantidadLeida+l]='\n';          
-
-                    printf("%s",salidaEgrep);//Printeo a salida estandard todo el resultado
-                }
+            int cantidadLeida=read(popen("./minisat input | egrep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e \".*SATISFIABLE\" | tr \"\n\" \"\t\" | tr \" \" \"\t\" | tr -d \"\t\"", "r"), salidaEgrep ,MAX_SIZE); // en minisat poner el path, voy a hacer q el output sea el mismo que el input
             
+            salidaEgrep[cantidadLeida++]='\t';
+        
+            int l=0;
+            //Agrego el nombre del archivo procesado
+            while(input[l]!=0){
+                salidaEgrep[cantidadLeida+l]=input[l];
+                l++;
             }
+    
+            //Agrego un enter al final para marcar el final del output, no estoy seguro si es eso o '\0'
+            salidaEgrep[cantidadLeida+l]='\n';          
+
+            printf("%s",salidaEgrep);//Printeo a salida estandard todo el resultado
+        }
+                
     }
 
 }

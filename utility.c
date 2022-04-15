@@ -11,7 +11,7 @@
 
 static sem_t * sem = NULL;
 
-static void createSharedSemaphore(){
+static char * createSharedSemaphore(){
     sem_t* semaphore=sem_open(SEM_ESCRITURA, IPC_CREATE, 0660,0);
     if (semaphore == SEM_FAILED){
         perror("sem_open/producer");
@@ -34,6 +34,7 @@ void terminateSemaphore(sem){
     sem_destroy(sem);
 }
 
+
 //Toma el filename y el tamanio y devuelve el id del bloque
 static int getSharedBlock(char* filename, int size){
     key_t key;
@@ -47,7 +48,7 @@ static int getSharedBlock(char* filename, int size){
     return shmget(key, size, 0644 | IPC_CREAT);
 }
 
-int joinMemoryBlock( char* filename, int size){
+char * joinMemoryBlock( char* filename, int size){
     int id = getSharedBlock(filename, size);
 
     if(id==ERROR){
@@ -70,12 +71,8 @@ bool leaveMemoryBlock(char * block){
 }
 
 //destruyo el bloque
-bool destroyMemoryBlock(char * filename){
-    int id = getSharedBlock(filename,0);
-
-    if(id== ERROR){
-        return NULL:
-    }
-
+bool destroyMemoryBlock(int id){
     return (shmctl(id, IPC_RMID, NULL) != ERROR);
 }
+
+

@@ -13,8 +13,7 @@
 sem_t * joinSemaphore();
 void leaveSemaphore(sem);
 void destroySemaphore(sem);
-int joinMemoryBlock( char* filename, int size);
-bool leaveMemoryBlock(char * block);
-
+char * joinMemoryBlock( char* filename, int size);
+bool leaveMemoryBlock(int id);
 
 #endif

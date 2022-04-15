@@ -34,6 +34,7 @@ int main(int argc, char const *argv[])
 
         // trato de obtener el bloque o lo creo en caso de q no exista
         char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
+        char *sharedMemBLockSeguro=sharedMemoryBlock;
         if (sharedMemBlock == NULL)
             {
                 // ERROR
@@ -47,13 +48,12 @@ int main(int argc, char const *argv[])
             FD_SET(readFd[i][0],miSet);               //Este es el fd al que llega la salida de los escalvos
         }
 
-
         char solution[MAX_SIZE];
         int j=0;
         for(int i=0;j<argc/10;j++){
             write(writeFd[i++],argv[j]);
-            if (k>=SLAVE_NUM){
-            k=0;}
+            if (i>=SLAVE_NUM)
+                i=0;
         }
         
         while(j<argc){        //hay que ver que logica usamos para estar viendo los resultados
@@ -67,7 +67,6 @@ int main(int argc, char const *argv[])
             //Una vez salta el select vamos probando uno por uno hasta ver cual tenemos lectura
             for(int i=0; i<SLAVE_NUM;i++){
                 if (FD_ISSET(readFd[i][0],miSet)!=0){//Hay escritura
-                    sem_wait(sem);
                     int bytesRead=read(STDIN_FILENO,solution,MAX_SIZE);
                     int k=0
                     for(;k<STRING_SIZE;k++){
@@ -76,24 +75,21 @@ int main(int argc, char const *argv[])
                     solution[bytesRead+k]='0'+i;        //Le agrego el numero de esclavo
                     solution[bytesRead+k+1]='\n';
                     sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
-                    sem_post(sem);
                     write(writeFd[i][1],argv[j],strlen(argv[j]));
+                    sem_post(sem);
                     j++;
                     
                 }
             }
-
-            
-            // Cuando hagamos vista tenemos q usar el pipe de lectura
         }
+        sharedMemBlock += sprintf(sharedMemBlock,"%c",EOF);
         // Termine y salgo del bloque de memoria
         leaveSemaphore(sem);
-        leaveMemoryBlock(sharedMemBlock);
+        leaveMemoryBlock(sharedMemBlockSeguro);
         return 1;
         
     }
-    // No se bien donde destruirlo
-    // destroyMemoryBlock(FILENAME);
+
     return 0;
 }
 
