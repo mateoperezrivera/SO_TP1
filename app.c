@@ -12,33 +12,41 @@
 #define STRING_SIZE 11
 #define ERROR -1
 static char slaveString[]="\tSlave ID: ";
-void createSlaves(int **writeFd, int **readFd);
+
+typedef struct fileDescriptors{
+    int writeFd[SLAVE_NUM][2];
+    int readFd[SLAVE_NUM][2];
+}fileDesc;
+
+void createSlaves(fileDesc* fDescPtr);
 
 
 
 
 int main(int argc, char const *argv[])
 {
-
+    printf("solo arranca");
     if (argc > 1)
     {
-
-
-        // creo 5 esclavos vacios
-        int *writeFd[SLAVE_NUM];
-        int *readFd[SLAVE_NUM];
-        createSlaves(writeFd, readFd);
+        
+        printf("Arranco por ");
+        // creo 5 esclavos vacio
+        fileDesc* fDescPtr;
+        createSlaves(fDescPtr);
+        /*printf("Creo los esclavos");
 
         // trato de obtener el bloque o lo creo en caso de q no exista
-        char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
-        char *sharedMemBlockSeguro=sharedMemBlock;
-        if (sharedMemBlock == NULL)
-            {
-                // ERROR
-                return ERROR;
-            }
+        //char *sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
+        //char *sharedMemBlockSeguro=sharedMemBlock;
+        // if (sharedMemBlock == NULL)
+        //     {
+        //         // ERROR
+        //         return ERROR;
+        //     }
+
         // Trato de obtener el semaforo o lo creo en caso de que no exista
-        sem_t *sem = joinSemaphore();
+       // sem_t *sem = joinSemaphore();
+        
         //Creo mi fd_set para usar en el select
         fd_set* miSet=NULL;
         for(int i=0; i<SLAVE_NUM;i++){
@@ -69,20 +77,25 @@ int main(int argc, char const *argv[])
                     for(;k<STRING_SIZE;k++){
                         solution[bytesRead+k]=slaveString[k];
                     }
-                    solution[bytesRead+k]='0'+i;        //Le agrego el numero de esclavo
-                    solution[bytesRead+k+1]='\n';
-                    sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
-                    write(writeFd[i][1],argv[j],strlen(argv[j]));
-                    sem_post(sem);
+                    bytesRead+=k;
+                    solution[bytesRead++]='0'+i;        //Le agrego el numero de esclavo
+                    solution[bytesRead++]='\n';
+                    solution[bytesRead++]='\0';
+
+                    printf("%s",solution);//Printf solo de prueba
+         //           sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
+         //           write(writeFd[i][1],argv[j],strlen(argv[j]));
+         //           sem_post(sem);
                     j++;
                     
                 }
             }
-        }
-        sharedMemBlock += sprintf(sharedMemBlock,"%c",EOF);
+            
+        }*/
+        //sharedMemBlock += sprintf(sharedMemBlock,"%c",EOF);
         // Termine y salgo del bloque de memoria
-        leaveSemaphore(sem);
-        leaveMemoryBlock(sharedMemBlockSeguro);
+        // leaveSemaphore(sem);
+        // leaveMemoryBlock(sharedMemBlockSeguro);
         return 1;
         
     }
@@ -91,30 +104,39 @@ int main(int argc, char const *argv[])
 }
 
 // Creo esclavos y modifico los punteros ingresados
-void createSlaves(int **writeFd, int **readFd)
+void createSlaves(fileDesc* fDescPtr)
 {
     pid_t pid;
+    int p1[2];
+    int p2[2];
 
-    for (int i = 0; i < SLAVE_NUM; i++)
+    for (int i = 0; i < 1; i++)
     {
-        if (pipe(writeFd[i]) < 0)
+        if (pipe(p1) < 0)
         {
-            // PIPE ERROR
+            printf("Father Pipe Error");
         }
-        if (pipe(readFd[i]) < 0)
+        
+        if (pipe(p2) < 0)
         {
-            // PIPE ERROR
+            printf("Son Pipe Error");
         }
+        
 
-        pid = fork();
+        /*fDescPtr->writeFd[i][0]=p1[1]; //seg fault
+        fDescPtr->readFd[i][0]=p1[0];
+        fDescPtr->writeFd[i][1]=p2[1];
+        fDescPtr->readFd[i][1]=p2[0];
+        printf("Hay fd");
+        
+         pid = fork();
         if (pid < 0)
         {
             fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
         }
         else if (pid == 0)
         {
-
-            close(readFd[i][0]);
+            close(readFd[i][0]);            // el read del esclaco i
             close(writeFd[i][1]);
             dup2(readFd[i][1], STDOUT_FILENO);
             dup2(writeFd[i][0], STDIN_FILENO);
@@ -128,6 +150,8 @@ void createSlaves(int **writeFd, int **readFd)
             close(readFd[i][1]);
             close(writeFd[i][0]);
         }
+        */
     }
+    
     return;
 }
