@@ -16,6 +16,8 @@ static char slaveString[]="\tSlave ID: ";
 typedef struct fileDescriptors{
     int writeFd[SLAVE_NUM][2];
     int readFd[SLAVE_NUM][2];
+    //Esto lo tenemos q implementar para cuando agregamos la primer vez, darle tareas solo cuando termine
+    int tasksLeft[SLAVE_NUM];
 }fileDesc;
 
 void createSlaves(fileDesc* fDescPtr);
@@ -50,13 +52,14 @@ int main(int argc, char const *argv[])
         //Creo mi fd_set para usar en el select
         fd_set* miSet=NULL;
         for(int i=0; i<SLAVE_NUM;i++){
-            FD_SET(readFd[i][0],miSet);               //Este es el fd al que llega la salida de los escalvos
+            FD_SET(fDescPtr->readFd[i][0],miSet);               //Este es el fd al que llega la salida de los escalvos
         }
 
         char solution[MAX_SIZE];
         int j=0;
         for(int i=0;j<argc/10;j++){
-            write(writeFd[i++][1],argv[j], strlen(argv[j]));
+            write(fDescPtr->writeFd[i++][1],argv[j], strlen(argv[j]));
+            fDescPtr->tasksLeft[i]++;
             if (i>=SLAVE_NUM)
                 i=0;
         }
@@ -73,6 +76,7 @@ int main(int argc, char const *argv[])
             for(int i=0; i<SLAVE_NUM;i++){
                 if (FD_ISSET(readFd[i][0],miSet)!=0){//Hay escritura
                     int bytesRead=read(STDIN_FILENO,solution,MAX_SIZE);
+                    fDescPtr->tasksLeft[i]--;
                     int k=0;
                     for(;k<STRING_SIZE;k++){
                         solution[bytesRead+k]=slaveString[k];
@@ -83,9 +87,12 @@ int main(int argc, char const *argv[])
                     solution[bytesRead++]='\0';
 
                     printf("%s",solution);//Printf solo de prueba
-         //           sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
-         //           write(writeFd[i][1],argv[j],strlen(argv[j]));
-         //           sem_post(sem);
+         //         sharedMemBlock += sprintf(sharedMemBlock,"%s",solution)+1;
+         //         if(fDescPtr->tasksLeft[i]==0){
+         //           write(fDescPtr->writeFd[i][1],argv[j],strlen(argv[j]));
+         //           fDescPtr->tasksLeft[i]++;
+         //         }
+         //         sem_post(sem);
                     j++;
                     
                 }
@@ -107,29 +114,22 @@ int main(int argc, char const *argv[])
 void createSlaves(fileDesc* fDescPtr)
 {
     pid_t pid;
-    int p1[2];
-    int p2[2];
 
     for (int i = 0; i < 1; i++)
     {
-        if (pipe(p1) < 0)
+        if (pipe(fDescPtr->readFd[i]) < 0)
         {
             printf("Father Pipe Error");
         }
         
-        if (pipe(p2) < 0)
+        if (pipe(fDescPtr->writeFd[i]) < 0)
         {
             printf("Son Pipe Error");
         }
-        
-
-        /*fDescPtr->writeFd[i][0]=p1[1]; //seg fault
-        fDescPtr->readFd[i][0]=p1[0];
-        fDescPtr->writeFd[i][1]=p2[1];
-        fDescPtr->readFd[i][1]=p2[0];
+        fDescPtr->tasksLeft[i]=0;
         printf("Hay fd");
         
-         pid = fork();
+        pid = fork();
         if (pid < 0)
         {
             fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
