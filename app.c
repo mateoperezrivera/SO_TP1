@@ -117,12 +117,13 @@ void createSlaves(fileDesc* fDescPtr)
 
     for (int i = 0; i < 1; i++)
     {
+        
         if (pipe(fDescPtr->readFd[i]) < 0)
         {
             printf("Father Pipe Error");
         }
         
-        if (pipe(fDescPtr->writeFd[i]) < 0)
+     /*   if (pipe(fDescPtr->writeFd[i]) < 0)
         {
             printf("Son Pipe Error");
         }
@@ -134,23 +135,24 @@ void createSlaves(fileDesc* fDescPtr)
         {
             fprintf(stderr, "fork() failed!\n"); // Analizar q hacer en este caso
         }
+        printf("ok");
         else if (pid == 0)
         {
-            close(readFd[i][0]);            // el read del esclaco i
-            close(writeFd[i][1]);
-            dup2(readFd[i][1], STDOUT_FILENO);
-            dup2(writeFd[i][0], STDIN_FILENO);
-            close(readFd[i][1]);
-            close(writeFd[i][0]);
+            close(fDescPtr->readFd[i][0]);            // el read del esclaco i
+            close(fDescPtr->writeFd[i][1]);
+            dup2(fDescPtr->readFd[i][1], STDOUT_FILENO);
+            dup2(fDescPtr->writeFd[i][0], STDIN_FILENO);
+            close(fDescPtr->readFd[i][1]);
+            close(fDescPtr->writeFd[i][0]);
             char *argv_for_program[] = { "esclavos.c", NULL };
             execv("esclavos.c", argv_for_program);
         }
         else
         {
-            close(readFd[i][1]);
-            close(writeFd[i][0]);
+            close(fDescPtr->readFd[i][1]);
+            close(fDescPtr->writeFd[i][0]);
         }
-        */
+     */   
     }
     
     return;
