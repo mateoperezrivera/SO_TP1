@@ -1,6 +1,5 @@
 #include "utility.h"
 #include <stdio.h>
-#define ERROR -1
 
 // _IONBF
 // No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.
