@@ -1,4 +1,4 @@
-FLAGS=-Wall -g -lrt -pthread
+FLAGS=-Wall -std=c99 -g -lrt -pthread -D_XOPEN_SOURCE=500 -D_POSIX_C_SOURCE=200809L 
 
 APP_OUTPUT=./app.exe
 SLAVE_OUTPUT=./esclavos.exe

@@ -1,5 +1,6 @@
 #include "utility.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 // _IONBF
 // No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.
@@ -8,10 +9,16 @@ int printElements(char* shm, int * hayElem);
 
 int main(int argc, char const *argv[])
 {   setvbuf(stdout, NULL, _IONBF, 0);
-    
-    sem_t *sem = joinSemaphore();
     int id;
-    scanf("%d",&id);
+
+    if (argc>1){
+        id=atoi(argv[1]);
+    }else{
+        scanf("%d",&id);
+    }
+
+    sem_t *sem = joinSemaphore();
+    ;
     char * sharedMemBlock = joinMemoryBlock(id);
     char *initialSharedMemBlock=sharedMemBlock;
     if (sharedMemBlock == NULL){
