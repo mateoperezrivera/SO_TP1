@@ -2,9 +2,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// _IONBF
-// No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.
-
 int printElements(char* shm, int * hayElem);
 
 int main(int argc, char const *argv[])

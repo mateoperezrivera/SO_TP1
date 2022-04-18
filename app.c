@@ -93,16 +93,17 @@ int main(int argc, char const *argv[])
             for(int i=0; res>0 && i<fDescPtr.slavesCreated;i++){     
                 
                 if (FD_ISSET(fDescPtr.slaveToApp[i][0],&miSet)){ //Hay escritura
-                    resueltos++;
                     read(fDescPtr.slaveToApp[i][0],solution,MAX_SIZE);
-                    fDescPtr.tasksLeft[i]--;
-                    sharedMemBlock += sprintf(sharedMemBlock,"%s\n",solution)+1;
-                    sem_post(sem);
-                    if(sharedMemBlock-initialSharedMemoryPosition>=BLOCK_SIZE){
-                        sharedMemBlock += sprintf(sharedMemBlock,"%c",'@');
+                    char * answer = strtok(solution, "\n");
+                    if(answer != NULL){
+                        sharedMemBlock += sprintf(sharedMemBlock,"%s\n",solution)+1;
+                        answer = strtok(NULL, "\n");
+                        resueltos++;
                         sem_post(sem);
-                        exit(3);                //Se paso de mi memoria maxima de trabajo
+
                     }
+                    fDescPtr.tasksLeft[i]--;
+
                 }
                 
                 //Agrego los tasks faltantes

@@ -17,6 +17,6 @@ int leaveSemaphore(sem_t * sem);
 int terminateSemaphore(sem_t * sem);
 char * createMemoryBlock(int * id);
 char * joinMemoryBlock(int id);
-bool leaveMemoryBlock(char * id);
-bool destroyMemoryBlock(int idS);
+bool leaveMemoryBlock(char * block);
+bool destroyMemoryBlock(int id);
 #endif
