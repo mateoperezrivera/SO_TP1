@@ -1,0 +1,2 @@
+pvs-studio.com/en/docs/warnings/	1	err	Help: The documentation for all analyzer warnings is available here: https://pvs-studio.com/en/docs/warnings/.
+/root/esclavos.c	32	err	V1010 Unchecked tainted data is used in the first argument: 'command'. Check lines: 32, 30.

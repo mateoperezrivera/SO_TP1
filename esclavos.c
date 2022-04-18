@@ -1,3 +1,5 @@
+// This is a personal academic project. Dear PVS-Studio, please check it.
+// PVS-Studio Static Code Analyzer for C, C++ and C#: http://www.viva64.com
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -17,12 +19,17 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
 
     while ((inputBytes = getline( &input, &size, stdin)) >0)
     {   
-        input[inputBytes-1]=0;            
+         
+        if (input==NULL){
+            exit(3);
+        }
+        input[inputBytes-1]=0;           
         char salidaEgrep[MAX_SIZE + 1];
         char command[MAX_SIZE];
-
+        //PVS-STUDIO detecta que commando no esta chequeado
+        //Command se declara justo arriba de su su uso, por lo tanto no es necesario un chequeo como sugiere
         sprintf(command, "minisat \"%s\" | grep -o -e \"Number of.*[0-9]\\+\" -e \"CPU time.*\" -e\".*SATISFIABLE\"| tr \"\n\" \" \" | tr \"\t\" \" \" ", input);
-       
+
         FILE * fileNum =popen(command, "r");
         if(fileNum == NULL){
             perror("Open Error");
