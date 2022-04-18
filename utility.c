@@ -6,25 +6,15 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/mman.h>
+#include <fcntl.h>
 
-#define ERROR (-1)
-
-static sem_t * sem = NULL;
-
-static sem_t * createSharedSemaphore(){
-    sem_t* semaphore=sem_open(SEM_ESCRITURA, IPC_CREAT, 0660,0);
+sem_t * joinSemaphore(){
+    sem_t* semaphore=sem_open(SEM_ESCRITURA, O_CREAT, S_IRUSR | S_IWUSR, 0);
     if (semaphore == SEM_FAILED){
         perror("sem_open/producer");
         exit(EXIT_FAILURE);
     } 
-    sem=semaphore;
-    return sem;
-}
-
-sem_t * joinSemaphore(){
-    if (sem==NULL)
-        createSharedSemaphore();
-    return sem;
+    return semaphore;
 }
 
 int leaveSemaphore(sem_t * sem){
@@ -32,32 +22,24 @@ int leaveSemaphore(sem_t * sem){
 }
 
 int terminateSemaphore(sem_t * sem){
-   return sem_destroy(sem);
+   return sem_unlink(SEM_ESCRITURA);
 }
 
 
 //Toma el filename y el tamanio y devuelve el id del bloque
-int getSharedBlock(char* filename, int size){
-    key_t key;
-
-    key = ftok(filename,0);
-    if(key == ERROR){
-        return ERROR;
-    }
-
+static int getSharedBlock(){
     //obtengo el id o lo creo en caso de q no exista
-    return shmget(key, size, 0644 | IPC_CREAT);
+    return shmget(IPC_PRIVATE, BLOCK_SIZE, 0644 | IPC_CREAT);
 }
 
-char * joinMemoryBlock( char* filename, int size){
-    int id = getSharedBlock(filename, size);
-
-    if(id==ERROR){
+char * createMemoryBlock(int *id){
+    *id = getSharedBlock();
+    if(*id==ERROR){
         return NULL;
     }
 
     //mapeo el bloque al id devolviendome un puntero al mismo
-    char * result=shmat(id, NULL, 0);
+    char * result=shmat(*id, NULL, 0);
     if(result == (char *)ERROR){
         return NULL;
     }
@@ -65,6 +47,16 @@ char * joinMemoryBlock( char* filename, int size){
     return result;
 }
 
+char * joinMemoryBlock(int id){
+    //mapeo el bloque al id devolviendome un puntero al mismo
+
+    char * result=shmat(id, NULL, 0);
+    if(result == (char *)ERROR){
+        return NULL;
+    }
+
+    return result;
+}
 
 //Me voy del bloque
 bool leaveMemoryBlock(char * block){
@@ -75,5 +67,6 @@ bool leaveMemoryBlock(char * block){
 bool destroyMemoryBlock(int id){
     return (shmctl(id, IPC_RMID, NULL) != ERROR);
 }
+
 
 

@@ -4,46 +4,47 @@
 // _IONBF
 // No buffering − No buffer is used. Each I/O operation is written as soon as possible. The buffer and size parameters are ignored.
 
-void printElements(char** shm, int * hayElem);
+int printElements(char* shm, int * hayElem);
 
 int main(int argc, char const *argv[])
-{   
+{   setvbuf(stdout, NULL, _IONBF, 0);
+    
     sem_t *sem = joinSemaphore();
-    char * sharedMemBlock = joinMemoryBlock(FILENAME, BLOCK_SIZE);
-    char *sharedMemBlockSeguro=sharedMemBlock;
-
+    int id;
+    scanf("%d",&id);
+    char * sharedMemBlock = joinMemoryBlock(id);
+    char *initialSharedMemBlock=sharedMemBlock;
     if (sharedMemBlock == NULL){
         return ERROR;
     }
     
-    int idBlock = getSharedBlock(FILENAME, BLOCK_SIZE); //talvez aca en vez de pasarle el filenam y size podriamos pasar sharedMemBlock
-    if(idBlock==0){
-        return ERROR;
-    }
  
     int hayElementos=1;
     while(hayElementos){
         sem_wait(sem);
-        printElements(&sharedMemBlock, &hayElementos);
-        
+        sharedMemBlock+= printElements(sharedMemBlock, &hayElementos);        
     }    
 
     //Termine
     leaveSemaphore(sem);
     terminateSemaphore(sem);
-    leaveMemoryBlock(sharedMemBlockSeguro);
-    destroyMemoryBlock(idBlock);
+    leaveMemoryBlock(initialSharedMemBlock);
+    destroyMemoryBlock(id);
     return 0;
 }
 
-void printElements(char** shm, int * hayElem){
-    char result[MAX_SIZE];
+int printElements(char* shm, int * hayElem){
+    char result[MAX_SIZE+1];
     int index=0;
-    while(**shm!='\n' && **shm!=EOF){
-        result[index++]=*(*shm++);
+    while(shm[index]!='\n' && shm[index]!='@' ){
+        result[index]=shm[index];
+        index++;
     }
-    if(**shm==EOF){
+    if(shm[index]=='@'){
         *hayElem=0;
+        return 1;
     }
-    printf("%s",result);
+    result[index++]=0;
+    printf("%s\n",result);
+    return index+1;
 }

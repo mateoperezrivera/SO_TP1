@@ -11,11 +11,12 @@
 #define ERROR -1
 #define FILENAME "app.c"
 
-int getSharedBlock(char* filename, int size);
+
 sem_t * joinSemaphore();
 int leaveSemaphore(sem_t * sem);
 int terminateSemaphore(sem_t * sem);
-char * joinMemoryBlock( char* filename, int size);
+char * createMemoryBlock(int * id);
+char * joinMemoryBlock(int id);
 bool leaveMemoryBlock(char * id);
-bool destroyMemoryBlock(int id);
+bool destroyMemoryBlock(int idS);
 #endif
