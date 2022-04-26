@@ -16,7 +16,6 @@
 
 
 typedef struct fileDescriptors{
-    
     int appToSlave[SLAVE_NUM][2];
     int slaveToApp[SLAVE_NUM][2];
     int highFd;
@@ -32,9 +31,17 @@ int main(int argc, char const *argv[])
 {
     setvbuf(stdout, NULL, _IONBF, 0);
     int tasksAmount = argc -1;
+    int fd;
+
     if (tasksAmount > 0)
     {
-        
+        // FIFO file path
+        char * pipeName = PIPENAME;
+
+        // Creating the named file(FIFO)
+        // mkfifo(<pathname>, <permission>)
+        mkfifo(pipeName, 0666);
+
         // creo 5 esclavos vacio
         fileDesc fDescPtr;
         
@@ -120,6 +127,10 @@ int main(int argc, char const *argv[])
             
         }
         sharedMemBlock += sprintf(sharedMemBlock,"%c",'@');
+        int namedFdWrite= open(PIPENAME,O_WRONLY);  
+        char finalizacion[]="@";
+        write(namedFdWrite,finalizacion,2);
+        close(namedFdWrite);
         sem_post(sem);
 
         for(int i=0; i<fDescPtr.slavesCreated;i++){

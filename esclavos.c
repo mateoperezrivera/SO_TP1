@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include "utility.h"
 #define MAX_SIZE 1024
 #define ERROR -1
 
@@ -15,8 +16,7 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
     size_t size = 0;
     char * input=NULL;
     int inputBytes;
-
-
+    int namedWriteFd = open(PIPENAME,O_WRONLY);   
     while ((inputBytes = getline( &input, &size, stdin)) >0)
     {   
          
@@ -39,7 +39,8 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
 
         salidaEgrep[salidaDim]='\n';
         printf("PID: %d\tFilename: %s\t %s\t", getpid(), input, salidaEgrep);
-
+        salidaDim += sprintf(salidaEgrep,"PID: %d\tFilename: %s\t %s\t", getpid(), input);
+        write(namedWriteFd,salidaEgrep,salidaDim);
         if(pclose(fileNum)== ERROR){
             perror("Close Error");
             exit(1);
@@ -47,6 +48,7 @@ int main(int argc, char const *argv[])          //El argumento va a salir el num
 
         
     }
+    close(namedFdWrite);
     free(input);
 }
 

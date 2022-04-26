@@ -10,7 +10,7 @@
 #define MAX_SIZE 1024
 #define ERROR -1
 #define FILENAME "app.c"
-
+#define PIPENAME "./pipeEsclavo"
 
 sem_t * joinSemaphore();
 int leaveSemaphore(sem_t * sem);
